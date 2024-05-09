@@ -1,0 +1,46 @@
+version: "3"
+
+x-postgres-variables: &postgres-variables
+  POSTGRES_USER: media_match
+  # TODO: Use a secret instead.
+  POSTGRES_PASSWORD: hunter2
+  POSTGRESS_HOST: db
+  POSTGRESS_DBNAME: media_match
+
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - 5000:5000
+    environment:
+      <<: *postgres-variables
+      OMM_CONFIG: /build/omm_config.py
+    depends_on:
+      - db
+    networks:
+      - backend
+    command: >
+      bash -c "MIGRATION_COMMAND=1 flask --app OpenMediaMatch.app db upgrade --directory OpenMediaMatch/migrations 
+      && MIGRATION_COMMAND=0 flask --app OpenMediaMatch.app run --host=0.0.0.0 --debug"
+
+  db:
+    image: postgres:latest
+    restart: unless-stopped
+    volumes:
+        - ./.devcontainer/pg-scripts/init-multiple-pg-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-pg-dbs.sh
+        - postgres-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      <<: *postgres-variables
+      POSTGRES_MULTIPLE_DATABASES: media_match
+    networks:
+      - backend
+
+volumes:
+  postgres-data:
+
+networks:
+  backend:
+    driver: bridge
