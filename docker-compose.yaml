@@ -28,13 +28,11 @@ services:
     image: postgres:latest
     restart: unless-stopped
     volumes:
-        - ./.devcontainer/pg-scripts/init-multiple-pg-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-pg-dbs.sh
         - postgres-data:/var/lib/postgresql/data
     ports:
       - 5432:5432
     environment:
       <<: *postgres-variables
-      POSTGRES_MULTIPLE_DATABASES: media_match
     networks:
       - backend
 
